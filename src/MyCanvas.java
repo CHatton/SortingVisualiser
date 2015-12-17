@@ -6,8 +6,6 @@ import java.awt.Rectangle;
 import javax.swing.JComponent;
 
 public class MyCanvas extends JComponent {
-
-	
 	@Override
 	public void paintComponent(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
@@ -21,10 +19,7 @@ public class MyCanvas extends JComponent {
 			} else{
 				g2.setColor(new Color(0xCCDDE3)); // white
 			}
-			g2.fillRect(i * 4 + 10, baseline - 15, 3, -(Sorter.array[i]*5 + 10));
+			g2.fillRect(i * 8 + 10, baseline - 15, 6, -(Sorter.array[i]*5 + 10));
 		} //for
-
-		
 	}
-	
 }
