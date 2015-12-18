@@ -1,20 +1,25 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class Sorter extends JFrame {
-	public static int[] array = new int[120]; // main array
-	public static int[] helper = new int[120]; // for merge sort
-	public static final int NUM_UNIQUE = 5;
-	public static JButton[] allButtons = new JButton[7];
+	public static int[] array = new int[130]; // main array
+	public static int[] helper = new int[130]; // for merge sort
+	public static final int NUM_UNIQUE = 5; // number of unique values in the
+											// few unique button
+	public static JButton[] sortButtons = new JButton[4];
+	public static JButton[] fillButtons = new JButton[4];
 	public static HashSet<Integer> selected = new HashSet<Integer>();
 	// for highlighting in RED
 	public static HashSet<Integer> sorted = new HashSet<Integer>();
@@ -24,23 +29,33 @@ public class Sorter extends JFrame {
 	public static MyCanvas m = new MyCanvas();
 
 	public static void main(String[] args) {
+		start();
+	}
+
+	public static void start() {
+		randomFill(); // fill the array randomly
 		Sorter s = new Sorter(); // start the board
 	}
 
 	public Sorter() {
-		randomFill(); // fill the array randomly
+
 		JFrame window = new JFrame("Sorting Visualiser - Cian Hatton");
 		window.setLayout(new BorderLayout());
-		window.setSize(1200, 800);
+		window.setSize(1215, 800);
 		window.add(m); // main canvas
 		window.setVisible(true);
 		window.getContentPane().setBackground(new Color(0x090A0A)); // black
 		window.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		window.setResizable(false);
 
-		JPanel buttons = new JPanel(); // add all buttons to this
-		buttons.setLayout(new GridLayout(4, 2)); // 4 rows, 2 cols
+		JPanel sortBtns = new JPanel(); // add all buttons to this
+		sortBtns.setLayout(new FlowLayout());
+		sortBtns.setPreferredSize(new Dimension(150,150));
+	
+		JPanel fillBtns = new JPanel();
+		fillBtns.setLayout(new FlowLayout(FlowLayout.CENTER)); // 4 rows, 2 cols
 
+		// ===== Button Functions =====
 		JButton randomFillButton = new JButton();
 		randomFillButton.setText("Random Fill");
 		randomFillButton.addActionListener(new ActionListener() {
@@ -62,6 +77,14 @@ public class Sorter extends JFrame {
 		almostSortedButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				almostSorted();
+			}
+		});
+
+		JButton reverseFillButton = new JButton();
+		reverseFillButton.setText("Reversed");
+		reverseFillButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				reverseFill();
 			}
 		});
 
@@ -97,21 +120,44 @@ public class Sorter extends JFrame {
 			}
 		});
 
-		allButtons[0] = randomFillButton;
-		allButtons[1] = fewUniqueButton;
-		allButtons[2] = almostSortedButton;
-		allButtons[3] = bubbleSortButton;
-		allButtons[4] = selectionSortButton;
-		allButtons[5] = insertionSortButton;
-		allButtons[6] = mergeSortButton;
+		// ===== End Button Functions =====
+		fillButtons[0] = randomFillButton;
+		fillButtons[1] = fewUniqueButton;
+		fillButtons[2] = almostSortedButton;
+		fillButtons[3] = reverseFillButton;
+
+		sortButtons[0] = bubbleSortButton;
+		sortButtons[1] = selectionSortButton;
+		sortButtons[2] = insertionSortButton;
+		sortButtons[3] = mergeSortButton;
+		// populate arrays with the buttons
 
 		// add the buttons
-		for (JButton b : allButtons) {
-			buttons.add(b); // add each button to the window
+
+		for (JButton b : sortButtons) {
+		
+			JLabel j = new JLabel();
+			sortBtns.add(b); // add each button to the window
+			j.setPreferredSize(new Dimension(80,80));
+			j.setVisible(true); // fill out space
+			sortBtns.add(j);
+			
 		}
 
-		window.add(buttons, BorderLayout.EAST);
-		// put all buttons on the RHS of the window
+		JLabel text = new JLabel();
+		text.setText("Fill Options");
+		fillBtns.add(text);
+
+		for (JButton b : fillButtons) {
+			
+			fillBtns.add(b); // add each button to the window
+			// fillBtns.add(new JLabel()); // fill up space
+		
+		}
+
+		window.add(fillBtns, BorderLayout.SOUTH);
+		window.add(sortBtns, BorderLayout.EAST);
+		// put all buttons on the bottom of the window
 	} // Sorter Constructor
 
 	// FILL BUTTONS
@@ -129,13 +175,13 @@ public class Sorter extends JFrame {
 
 		for (int i = 0; i < uniqueNums.length; i++) {
 			uniqueNums[i] = rnd.nextInt(100);
-		}
+		} // pick few different values
 
 		int index = 0;
 		for (int i = 0; i < NUM_UNIQUE; i++) {
 			for (int j = 0; j < array.length / NUM_UNIQUE; j++) {
 				array[index++] = uniqueNums[i];
-			}
+			} // fill up from the few values
 		}
 		m.repaint();
 	} // fewUnique
@@ -158,7 +204,46 @@ public class Sorter extends JFrame {
 		m.repaint();
 	} // almostSorted
 
+	public static void reverseFill() {
+		for (int i = 0; i < array.length; i++) {
+			array[i] = (array.length - 1) - i;
+		} // fill up the array backwards
+		m.repaint();
+	}
+
 	// END FILL BUTTONS
+
+	// SORT BUTTONS
+
+	public static void bubbleSortButton() {
+		toggleButtons();
+		bubbleSort();
+		makeGreen();
+		toggleButtons();
+	}
+
+	public static void selectionSortButton() {
+		toggleButtons();
+		selectionSort();
+		makeGreen();
+		toggleButtons();
+	}
+
+	public static void insertionSortButton() {
+		toggleButtons();
+		insertionSort();
+		makeGreen();
+		toggleButtons();
+	}
+
+	public static void buttonMergeSort(int low, int high) {
+		toggleButtons();
+		mergeSort(low, high);
+		makeGreen();
+		toggleButtons();
+	}
+
+	// END SORT BUTTONS
 
 	public static void bubbleSort() {
 		boolean switched = true;
@@ -280,34 +365,6 @@ public class Sorter extends JFrame {
 		}
 	} // mergeSort
 
-	public static void bubbleSortButton() {
-		disableButtons();
-		bubbleSort();
-		makeGreen();
-		enableButtons();
-	}
-
-	public static void selectionSortButton() {
-		disableButtons();
-		selectionSort();
-		makeGreen();
-		enableButtons();
-	}
-
-	public static void insertionSortButton() {
-		disableButtons();
-		insertionSort();
-		makeGreen();
-		enableButtons();
-	}
-
-	public static void buttonMergeSort(int low, int high) {
-		disableButtons();
-		mergeSort(low, high);
-		makeGreen();
-		enableButtons();
-	}
-
 	public static void merge(int low, int middle, int high) {
 		// copy both parts into the helper array
 		for (int i = low; i <= high; i++) {
@@ -371,17 +428,15 @@ public class Sorter extends JFrame {
 		// highlight all buttons green
 	} // makeGreen
 
-	public static void disableButtons() {
-		for (JButton b : allButtons) {
-			b.setEnabled(false);
-			// disable all buttons
+	public static void toggleButtons() {
+		for (JButton b : sortButtons) {
+			b.setEnabled(!b.isEnabled());
+			// disable or enable all buttons
+		}
+		for (JButton b : fillButtons) {
+			b.setEnabled(!b.isEnabled());
+			// disable or enable all buttons
 		}
 	}
 
-	public static void enableButtons() {
-		for (JButton b : allButtons) {
-			b.setEnabled(true);
-			// enable all buttons
-		}
-	}
 }
