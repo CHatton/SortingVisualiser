@@ -14,19 +14,23 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class Sorter extends JFrame {
-	public static int[] array = new int[130]; // main array
-	public static int[] helper = new int[130]; // for merge sort
-	public static final int NUM_UNIQUE = 5; // number of unique values in the
-											// few unique button
-	public static JButton[] sortButtons = new JButton[4];
+	public static final int ARRAY_SIZE = 130;
+	public static int[] array = new int[ARRAY_SIZE]; // main array
+	public static int[] helper = new int[ARRAY_SIZE]; // for merge sort
+	public static final int NUM_UNIQUE = 5;
+	// number of unique values in the few unique button
+	public static JButton[] sortButtons = new JButton[5];
 	public static JButton[] fillButtons = new JButton[4];
+	public static JButton[] speedButtons = new JButton[3];
 	public static HashSet<Integer> selected = new HashSet<Integer>();
 	// for highlighting in RED
 	public static HashSet<Integer> sorted = new HashSet<Integer>();
 	// highlighting in GREEN
-	public static final int SHORT_WAIT = 5;
-	public static final int LONG_WAIT = 15;
-	public static MyCanvas m = new MyCanvas();
+	public static HashSet<Integer> partial = new HashSet<Integer>();
+	
+	public static int SHORT_WAIT = 15;
+	public static int LONG_WAIT = 25;
+	public static Display m = new Display();
 
 	public static void main(String[] args) {
 		start();
@@ -35,6 +39,7 @@ public class Sorter extends JFrame {
 	public static void start() {
 		randomFill(); // fill the array randomly
 		Sorter s = new Sorter(); // start the board
+
 	}
 
 	public Sorter() {
@@ -50,8 +55,8 @@ public class Sorter extends JFrame {
 
 		JPanel sortBtns = new JPanel(); // add all buttons to this
 		sortBtns.setLayout(new FlowLayout());
-		sortBtns.setPreferredSize(new Dimension(150,150));
-	
+		sortBtns.setPreferredSize(new Dimension(150, 150));
+
 		JPanel fillBtns = new JPanel();
 		fillBtns.setLayout(new FlowLayout(FlowLayout.CENTER)); // 4 rows, 2 cols
 
@@ -119,6 +124,41 @@ public class Sorter extends JFrame {
 				CompletableFuture.runAsync(() -> buttonMergeSort(0, array.length - 1));
 			}
 		});
+		
+		JButton quickSortButton = new JButton();
+		quickSortButton.setText("Quicksort");
+		quickSortButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				CompletableFuture.runAsync(() -> buttonQuickSort(0, array.length - 1));
+			}
+		});
+
+		JButton skipButton = new JButton();
+		skipButton.setText("Skip");
+		skipButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				CompletableFuture.runAsync(() -> skip());
+			}
+		});
+		skipButton.setEnabled(false);
+
+		JButton speedupButton = new JButton();
+		speedupButton.setText("+");
+		speedupButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				CompletableFuture.runAsync(() -> speedup());
+			}
+		});
+		speedupButton.setEnabled(false);
+
+		JButton slowdownButton = new JButton();
+		slowdownButton.setText("-");
+		slowdownButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				CompletableFuture.runAsync(() -> slowdown());
+			}
+		});
+		slowdownButton.setEnabled(false);
 
 		// ===== End Button Functions =====
 		fillButtons[0] = randomFillButton;
@@ -126,22 +166,27 @@ public class Sorter extends JFrame {
 		fillButtons[2] = almostSortedButton;
 		fillButtons[3] = reverseFillButton;
 
+		speedButtons[0] = skipButton;
+		speedButtons[1] = speedupButton;
+		speedButtons[2] = slowdownButton;
+
 		sortButtons[0] = bubbleSortButton;
 		sortButtons[1] = selectionSortButton;
 		sortButtons[2] = insertionSortButton;
 		sortButtons[3] = mergeSortButton;
+		sortButtons[4] = quickSortButton;
 		// populate arrays with the buttons
 
 		// add the buttons
 
 		for (JButton b : sortButtons) {
-		
+
 			JLabel j = new JLabel();
 			sortBtns.add(b); // add each button to the window
-			j.setPreferredSize(new Dimension(80,80));
+			j.setPreferredSize(new Dimension(80, 80));
 			j.setVisible(true); // fill out space
 			sortBtns.add(j);
-			
+
 		}
 
 		JLabel text = new JLabel();
@@ -149,10 +194,16 @@ public class Sorter extends JFrame {
 		fillBtns.add(text);
 
 		for (JButton b : fillButtons) {
-			
+
 			fillBtns.add(b); // add each button to the window
-			// fillBtns.add(new JLabel()); // fill up space
-		
+		}
+
+		text = new JLabel();
+		text.setText("Speed Options");
+		fillBtns.add(text);
+
+		for (JButton b : speedButtons) {
+			fillBtns.add(b); // add each button to the window
 		}
 
 		window.add(fillBtns, BorderLayout.SOUTH);
@@ -242,6 +293,13 @@ public class Sorter extends JFrame {
 		makeGreen();
 		toggleButtons();
 	}
+	
+	public static void buttonQuickSort(int low, int high) {
+		toggleButtons();
+		quicksort(low, high);
+		makeGreen();
+		toggleButtons();
+	}
 
 	// END SORT BUTTONS
 
@@ -286,7 +344,7 @@ public class Sorter extends JFrame {
 
 			lowest = Integer.MAX_VALUE;
 			// ensure that you'll find a value lower
-			sorted.add(i - 1);
+			partial.add(i - 1);
 			for (int j = startPoint; j < array.length; j++) {
 
 				selected.add(j); // add current
@@ -311,10 +369,9 @@ public class Sorter extends JFrame {
 			startPoint++; // start one space ahead
 		}
 
-		selected.remove(array.length - 1);
+		selected.clear();
+		partial.clear();
 		m.repaint();
-
-		makeGreen();
 	} // selection sort
 
 	public static void insertionSort() {
@@ -332,10 +389,10 @@ public class Sorter extends JFrame {
 				// if there is a value lower behind the current value
 				// we go backwards from the index we're at to the start
 
-				selected.add(j - 1);
+				selected.add(j);
 				m.repaint();
 				pause(SHORT_WAIT);
-				selected.remove(j - 1);
+				selected.remove(j);
 				m.repaint();
 
 				array[j] = array[j - 1]; // swap values
@@ -353,7 +410,7 @@ public class Sorter extends JFrame {
 	} // insertion sort
 
 	public static void mergeSort(int low, int high) {
-		if (low < high) { // int not - the collection is already sorted
+		if (low < high) { // if not - the collection is already sorted
 			int middle = low + (high - low) / 2;
 			// get the index of the element in the middle
 			mergeSort(low, middle);
@@ -394,11 +451,11 @@ public class Sorter extends JFrame {
 				j++;
 			}
 
-			sorted.add(k);
+			partial.add(k);
 			m.repaint();
 			k++;
 		}
-		sorted.clear();
+		partial.clear();
 		m.repaint();
 		// copy the rest of the LHS of the array to the target array
 		while (i <= middle) {
@@ -408,6 +465,87 @@ public class Sorter extends JFrame {
 		}
 		selected.clear();
 		m.repaint();
+	}
+	
+	
+	public static void quicksort(int low, int high){
+		int i = low;
+		int j = high;
+		// get the pivot item from the middle of the list
+		int pivot = array[low +(high-low)/2];
+		partial.add(low +(high-low)/2);
+		// divide into two lists
+		
+		while(i <= j){
+			pause(LONG_WAIT);
+			// if the current value from the left is smaller than the pivot
+			// element then get the next element from the left list
+			while(array[i] < pivot){
+				
+				selected.add(i);
+				m.repaint();
+				pause(LONG_WAIT);
+				selected.remove(i);
+
+				i++;
+			}
+	
+			
+			
+			// if the current value from the right list is larger than the pivot
+			// element then get the next element from the right list
+			while(array[j] > pivot){
+			
+				selected.add(j);
+				m.repaint();
+				pause(LONG_WAIT);
+				selected.remove(j);
+				j--;
+			}
+
+			m.repaint();
+			
+			/*
+			 * If we have found a value in the left list which is larger than
+			 * the pivot element and if we have found a value in the right list
+			 * which is smaller than the pivot element then we exchange the values
+			 */
+			
+			// as we are done, we can increase i and j
+			
+			if(i <= j){
+				
+
+				selected.add(i);
+				selected.add(j);
+				m.repaint();
+				pause(LONG_WAIT);
+				selected.clear();
+				exchange(i,j);
+
+				i++;
+				j--;
+			}
+			
+		} // while
+		
+		partial.clear();
+		
+		// Recursion
+		
+		if(low < j){
+			quicksort(low,j);
+		}
+		if(i < high){
+			quicksort(i,high);
+		}
+		
+	} // quicksort
+	
+	public static void exchange(int i, int j){
+		int temp = array[i];
+		array[i] = array[j];
+		array[j] = temp;
 	}
 
 	public static void pause(int milisecs) {
@@ -437,6 +575,43 @@ public class Sorter extends JFrame {
 			b.setEnabled(!b.isEnabled());
 			// disable or enable all buttons
 		}
+
+		for (JButton b : speedButtons) {
+			b.setEnabled(!b.isEnabled());
+			// disable or enable all buttons
+		}
+	} // toggleButtons
+
+	public static void skip() {
+		int sw = SHORT_WAIT;
+		int lw = LONG_WAIT; // save current values
+
+		SHORT_WAIT = 0;
+		LONG_WAIT = 0;// skip the current animation
+
+		pause(1000); // wait to make sure that it skips
+
+		SHORT_WAIT = sw;
+		LONG_WAIT = lw; // reassign values
+	} // skip
+
+	public static void speedup() {
+
+		if (SHORT_WAIT > 5) {
+			SHORT_WAIT -= 5;
+			LONG_WAIT -= 5;
+		} else if (SHORT_WAIT > 1) {
+			SHORT_WAIT -= 1;
+			LONG_WAIT -= 1;
+		} else if (SHORT_WAIT > 0.1) {
+			SHORT_WAIT -= 0.1;
+			LONG_WAIT -= 0.1;
+		} // change the duration of waiting in animation
 	}
+
+	public static void slowdown() {
+		SHORT_WAIT += 5;
+		LONG_WAIT += 5;
+	} // slow the animations
 
 }
